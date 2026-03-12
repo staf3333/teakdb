@@ -1,6 +1,6 @@
-# LSM-Tree Key-Value Store
+# TeakDB 🪵
 
-A write-optimized storage engine built from scratch in Go — memtable, SSTables, compaction, and bloom filters.
+A write-optimized key-value store built from scratch in Go, powered by an LSM tree — memtable, SSTables, compaction, and bloom filters.
 
 **DDIA Chapter 3** — the write-optimized counterpart to the [simple OLAP DB](../simple-olap-db).
 
