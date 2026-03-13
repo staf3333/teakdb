@@ -178,19 +178,19 @@ func (t *RBTree) Search(key string) (string, bool) {
 	return "", false
 }
 
-type KVPair struct {
+type KeyValuePair struct {
 	Key, Value string
 }
 
-func (t *RBTree) InOrderTraversal() []KVPair {
+func (t *RBTree) InOrderTraversal() []KeyValuePair {
 	return t.dfs(t.root)
 }
 
-func (t *RBTree) dfs(node *node) []KVPair {
+func (t *RBTree) dfs(node *node) []KeyValuePair {
 	if node == t.sentinel {
-		return []KVPair{}
+		return []KeyValuePair{}
 	}
-	result := append(t.dfs(node.left), KVPair{Key: node.key, Value: node.value})
+	result := append(t.dfs(node.left), KeyValuePair{Key: node.key, Value: node.value})
 	result = append(result, t.dfs(node.right)...)
 	return result 
 }
