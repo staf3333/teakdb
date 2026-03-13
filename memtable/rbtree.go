@@ -1,20 +1,21 @@
 package memtable
 
 type node struct {
-	key string
-	value string
-	color color
-	left *node
-	right *node
+	key    string
+	value  string
+	color  color
+	left   *node
+	right  *node
 	parent *node
 }
 
 type RBTree struct {
-	root *node
+	root     *node
 	sentinel *node
 }
 
 type color int
+
 const (
 	red = iota
 	black
@@ -23,11 +24,10 @@ const (
 func NewRBTree() *RBTree {
 	sentinel := &node{color: black}
 	return &RBTree{
-		root: sentinel,
+		root:     sentinel,
 		sentinel: sentinel,
 	}
 }
-
 
 func (t *RBTree) leftRotate(node *node) {
 	pivot := node.right
@@ -42,7 +42,7 @@ func (t *RBTree) leftRotate(node *node) {
 	if t.root == node {
 		t.root = pivot
 	} else if parent.left == node {
-		parent.left = pivot 
+		parent.left = pivot
 	} else {
 		parent.right = pivot
 	}
@@ -63,7 +63,7 @@ func (t *RBTree) rightRotate(node *node) {
 	if t.root == node {
 		t.root = pivot
 	} else if parent.left == node {
-		parent.left = pivot 
+		parent.left = pivot
 	} else {
 		parent.right = pivot
 	}
@@ -73,10 +73,10 @@ func (t *RBTree) rightRotate(node *node) {
 
 func (t *RBTree) Insert(key, value string) {
 	newNode := &node{
-		key: key,
+		key:   key,
 		value: value,
 		color: red,
-		left: t.sentinel,
+		left:  t.sentinel,
 		right: t.sentinel,
 	}
 
@@ -88,7 +88,7 @@ func (t *RBTree) Insert(key, value string) {
 		newNode.color = black
 		return
 	}
-	
+
 	// iterate through tree to find the proper location
 	curr := t.root
 	parent := t.root.parent
@@ -131,7 +131,7 @@ func (t *RBTree) insertFixup(newNode *node) {
 				if newNode == parent.right {
 					t.leftRotate(parent)
 					newNode = parent
-				} 	
+				}
 				t.rightRotate(grandparent)
 				grandparent.color = red
 				newNode.parent.color = black
@@ -192,5 +192,5 @@ func (t *RBTree) dfs(node *node) []KeyValuePair {
 	}
 	result := append(t.dfs(node.left), KeyValuePair{Key: node.key, Value: node.value})
 	result = append(result, t.dfs(node.right)...)
-	return result 
+	return result
 }

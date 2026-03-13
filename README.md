@@ -25,12 +25,12 @@ A write-optimized key-value store built from scratch in Go, powered by an LSM tr
 ## Progress
 
 ### Phase 1: Red-Black Tree (Memtable internals)
-- [ ] Define node and tree structs
-- [ ] Implement left-rotate and right-rotate
-- [ ] Implement insert (BST insert + color red)
-- [ ] Implement insert-fixup (recoloring/rotation cases)
-- [ ] Implement search
-- [ ] Implement in-order traversal
+- [x] Define node and tree structs
+- [x] Implement left-rotate and right-rotate
+- [x] Implement insert (BST insert + color red)
+- [x] Implement insert-fixup (recoloring/rotation cases)
+- [x] Implement search
+- [x] Implement in-order traversal
 - [ ] Tests for all operations
 
 ### Phase 2: Memtable
