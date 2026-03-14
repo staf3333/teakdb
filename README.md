@@ -31,7 +31,7 @@ A write-optimized key-value store built from scratch in Go, powered by an LSM tr
 - [x] Implement insert-fixup (recoloring/rotation cases)
 - [x] Implement search
 - [x] Implement in-order traversal
-- [ ] Tests for all operations
+- [x] Tests for all operations
 
 ### Phase 2: Memtable
 - [ ] Wrap red-black tree with memtable API (Put, Get, Delete)
