@@ -8,9 +8,13 @@ import (
 	"github.com/staf3333/teakdb/memtable"
 )
 
+type indexEntry struct {
+	key string
+	offset uint32
+}
+
 
 func WriteSSTable(sortedPairs []memtable.KeyValuePair, fileName string) error {
-	// open the file 
 	file, err := os.Create(fileName)
 	if err != nil {
 		return err
@@ -26,6 +30,8 @@ func WriteSSTable(sortedPairs []memtable.KeyValuePair, fileName string) error {
 	// https://www.reddit.com/r/golang/comments/1qc58lp/when_to_use_bufiowriter_bufioreader_and_when_not/
 	writer := bufio.NewWriter(file)
 
+	var offset uint32;
+	var index []indexEntry
 	for _, pair := range sortedPairs {
 		// write [key_len][key_bytes][val_len][val_bytes]
 		err = binary.Write(writer, binary.BigEndian, uint32(len(pair.Key)))
@@ -47,6 +53,37 @@ func WriteSSTable(sortedPairs []memtable.KeyValuePair, fileName string) error {
 		if err != nil {
 			return err
 		}
+
+		// after writing  add to index add to the offset and
+		index = append(index, indexEntry{pair.Key, offset})
+
+		// 4+4 bytes for length of each key/val and the lengths themselves
+		offset += 8 + uint32(len(pair.Key)) + uint32(len(pair.Value))
+
+	}
+
+	for _, entry := range index {
+		// write [key_len][key_bytes][offset]
+		err = binary.Write(writer, binary.BigEndian, uint32(len(entry.key)))
+		if err != nil {
+			return err
+		}
+
+		_, err := writer.Write([]byte(entry.key))
+		if err != nil {
+			return err
+		}
+
+		err = binary.Write(writer, binary.BigEndian, entry.offset)
+		if err != nil {
+			return err
+		}
+	}
+
+	// at the end of the key/val writes, the offset will coincidide with the start of the index
+	err = binary.Write(writer, binary.BigEndian, offset)
+	if err != nil {
+		return err
 	}
 
 	// 1. Flush Go's internal buffer to the OS kernel
