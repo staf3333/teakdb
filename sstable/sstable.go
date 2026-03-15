@@ -171,3 +171,57 @@ func WriteSSTable(sortedPairs []memtable.KeyValuePair, fileName string) error {
 	// indicating the file is already closed, which is harmless.
 	return file.Close()
 }
+
+func (s *SSTable) Search(key string) (string, bool, error) {
+	// do binary search on the index entries of the SSTable to find the byte offset of the key/val pair
+	var found bool
+	var offset uint32
+	left := 0
+	right := len(s.index) - 1
+	for left <= right {
+		mid := (left + right) / 2
+		if s.index[mid].key == key {
+			offset = s.index[mid].offset
+			found = true
+			break
+		} else if s.index[mid].key > key {
+			right = mid - 1
+		} else {
+			left = mid + 1
+		}
+	}
+
+	if !found {
+		return "", false, nil
+	}
+
+	// once you have the byte offset, read those bytes from the file and return the value
+	file, err := os.Open(s.filepath)
+	if err != nil {
+		return "", false, err
+	}
+
+	defer file.Close()
+
+	// because we already know the key length, we can skip to where we want to read the value
+	_, err = file.Seek(int64(offset) + 4 + int64(len(key)), io.SeekStart)
+	if err != nil {
+		return "", false, err
+	}
+
+	var valueLen uint32
+	err = binary.Read(file, binary.BigEndian, &valueLen)
+	if err != nil {
+		return "", false, err
+	}
+
+	var value string
+	valueBytes := make([]byte, valueLen)
+	_, err = io.ReadFull(file, valueBytes)
+	if err != nil {
+		return "", false, err
+	}
+	value = string(valueBytes)
+
+	return value, found, nil
+}
