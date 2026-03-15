@@ -49,8 +49,9 @@ A write-optimized key-value store built from scratch in Go, powered by an LSM tr
 - [x] Load existing SSTables on startup
 
 ### Phase 5: WAL
-- [ ] Write-ahead log for crash recovery
-- [ ] Replay log on startup
+- [x] Write-ahead log for crash recovery
+- [x] Replay log on startup
+- [x] Reset WAL on memtable flush
 
 ### Phase 6: Compaction
 - [ ] Merge SSTables (size-tiered)

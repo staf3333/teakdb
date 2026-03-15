@@ -121,3 +121,7 @@ func (wal *WriteAheadLog) Reset() error {
 	wal.file = file
 	return nil
 }
+
+func (wal *WriteAheadLog) Close() error {
+	return wal.file.Close()
+}
