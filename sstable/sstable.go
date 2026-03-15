@@ -3,6 +3,7 @@ package sstable
 import (
 	"bufio"
 	"encoding/binary"
+	"io"
 	"os"
 
 	"github.com/staf3333/teakdb/memtable"
@@ -11,6 +12,73 @@ import (
 type indexEntry struct {
 	key string
 	offset uint32
+}
+
+type SSTable struct {
+	filepath string
+	index []indexEntry
+}
+
+func OpenSSTable(filepath string) (*SSTable, error) {
+	file, err := os.Open(filepath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	_, err = file.Seek(-4, io.SeekEnd)
+	if err != nil {
+		return nil, err
+	}
+
+	// read index offset from file
+	var indexOffset uint32
+	err = binary.Read(file, binary.BigEndian, &indexOffset)
+	if err != nil {
+		return nil, err
+	}
+
+
+	// read the index into memory starting from the offset
+	// keep track of the bytes to know when to stop reading (before the index offset 4 bytes)
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	fileSize := uint32(fileInfo.Size())
+	currentPosition := indexOffset
+	_, err = file.Seek(int64(indexOffset), io.SeekStart)
+	if err != nil {
+		return nil, err
+	}
+	var index []indexEntry
+
+	for currentPosition < fileSize - 4 {
+		// read key, and offset into memory
+		var keyLen uint32
+		err = binary.Read(file, binary.BigEndian, &keyLen)
+		if err != nil {
+			return nil, err
+		}
+
+		var key string
+		keyBytes := make([]byte, keyLen)
+		_, err := io.ReadFull(file, keyBytes)
+		if err != nil {
+			return nil, err
+		}
+		key = string(keyBytes)
+
+		var offset uint32
+		err = binary.Read(file, binary.BigEndian, &offset)
+		if err != nil {
+			return nil, err
+		}
+		index = append(index, indexEntry{key: key, offset: offset})
+		currentPosition += 4 + keyLen + 4
+	}
+
+	return &SSTable{filepath: filepath, index: index}, nil
 }
 
 
