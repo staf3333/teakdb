@@ -44,7 +44,9 @@ A write-optimized key-value store built from scratch in Go, powered by an LSM tr
 - [x] Tests for write → read roundtrip
 
 ### Phase 4: Read Path
-- [ ] Check memtable → SSTables (newest first)
+- [x] Check memtable → SSTables (newest first)
+- [x] DB engine with Put/Get API
+- [x] Load existing SSTables on startup
 
 ### Phase 5: WAL
 - [ ] Write-ahead log for crash recovery
