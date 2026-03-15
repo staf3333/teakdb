@@ -34,12 +34,14 @@ A write-optimized key-value store built from scratch in Go, powered by an LSM tr
 - [x] Tests for all operations
 
 ### Phase 2: Memtable
-- [ ] Wrap red-black tree with memtable API (Put, Get, Delete)
-- [ ] Size tracking and flush threshold
+- [x] Wrap red-black tree with memtable API (Put, Get)
+- [x] Size tracking and flush threshold
 
 ### Phase 3: SSTable Flush
-- [ ] Define SSTable on-disk format
-- [ ] Serialize memtable to sorted on-disk file
+- [x] Define SSTable on-disk format (length-prefixed entries + embedded index)
+- [x] Serialize memtable to sorted on-disk file
+- [x] Read SSTable: load index, binary search, read value from disk
+- [x] Tests for write → read roundtrip
 
 ### Phase 4: Read Path
 - [ ] Check memtable → SSTables (newest first)
