@@ -61,7 +61,15 @@ func NewDB(dataDir string) (*DB, error) {
 func (d *DB) Put(key, val string) error {
 	// write to memtable, if full flush to sstable and start a new one
 	d.memtable.Put(key, val)
+	err := d.flushMemtable()
+	if err != nil {
+		return err
+	}
 
+	return nil
+}
+
+func (d *DB) flushMemtable() error {
 	if d.memtable.IsFull() {
 		memtableKVPairs := d.memtable.InOrder()
 		fileName := fmt.Sprintf("sstable_%d.sst", time.Now().UnixNano())
@@ -80,6 +88,7 @@ func (d *DB) Put(key, val string) error {
 
 		d.memtable = memtable.NewMemtable(defaultMaxSize)
 	}
+
 	return nil
 }
 
