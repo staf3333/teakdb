@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/staf3333/teakdb/memtable"
+	"github.com/staf3333/teakdb/wal"
 )
 
 func TestDBPutAndGet(t *testing.T) {
@@ -48,9 +49,14 @@ func TestDBFlushToSSTable(t *testing.T) {
 	dir := t.TempDir()
 
 	// use a tiny memtable so we trigger a flush
+	w, err := wal.NewWriteAheadLog(dir)
+	if err != nil {
+		t.Fatalf("NewWriteAheadLog failed: %v", err)
+	}
 	db := &DB{
-		memtable: newSmallMemtable(),
-		dataDir:  dir,
+		memtable:      newSmallMemtable(),
+		dataDir:       dir,
+		writeAheadLog: w,
 	}
 
 	// write enough data to trigger a flush
@@ -100,9 +106,14 @@ func TestDBSurvivesRestart(t *testing.T) {
 	dir := t.TempDir()
 
 	// first "session" — write data and trigger flush
+	w, err := wal.NewWriteAheadLog(dir)
+	if err != nil {
+		t.Fatalf("NewWriteAheadLog failed: %v", err)
+	}
 	db1 := &DB{
-		memtable: newSmallMemtable(),
-		dataDir:  dir,
+		memtable:      newSmallMemtable(),
+		dataDir:       dir,
+		writeAheadLog: w,
 	}
 	for i := 0; i < 100; i++ {
 		err := db1.Put(fmt.Sprintf("key-%03d", i), fmt.Sprintf("val-%03d", i))

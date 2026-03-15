@@ -10,6 +10,7 @@ import (
 
 	"github.com/staf3333/teakdb/memtable"
 	"github.com/staf3333/teakdb/sstable"
+	"github.com/staf3333/teakdb/wal"
 )
 
 const defaultMaxSize = 4 * 1024 * 1024 // 4MB
@@ -18,11 +19,13 @@ type DB struct {
 	memtable *memtable.Memtable
 	sstables []sstable.SSTable
 	dataDir string
+	writeAheadLog *wal.WriteAheadLog
 }
 
 func NewDB(dataDir string) (*DB, error) {
 	// ensure data directory exists
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
+	err := os.MkdirAll(dataDir, 0755)
+	if err != nil {
 		return nil, err
 	}
 
@@ -51,17 +54,40 @@ func NewDB(dataDir string) (*DB, error) {
 		sstables = append(sstables, *sst)
 	}
 
+	memtable := memtable.NewMemtable(defaultMaxSize)
+
+	// initialize write ahead log
+	writeAheadLog, err := wal.NewWriteAheadLog(dataDir)
+	if err != nil {
+		return nil, err
+	}
+
+	walKeyValPairs, err := writeAheadLog.Replay() 
+	if err != nil {
+		return nil, err
+	}
+	if len(walKeyValPairs) > 0 {
+		for _, pair := range walKeyValPairs {
+			memtable.Put(pair.Key, pair.Value)
+		}
+	}
+
 	return &DB{
-		memtable: memtable.NewMemtable(defaultMaxSize),
+		memtable: memtable,
 		sstables: sstables,
 		dataDir:  dataDir,
+		writeAheadLog: writeAheadLog,
 	}, nil
 }
 
 func (d *DB) Put(key, val string) error {
+	err := d.writeAheadLog.Write(key, val)
+	if err != nil {
+		return err
+	}
 	// write to memtable, if full flush to sstable and start a new one
 	d.memtable.Put(key, val)
-	err := d.flushMemtable()
+	err = d.flushMemtable()
 	if err != nil {
 		return err
 	}
@@ -87,6 +113,7 @@ func (d *DB) flushMemtable() error {
 		d.sstables = append([]sstable.SSTable{*sst}, d.sstables...)
 
 		d.memtable = memtable.NewMemtable(defaultMaxSize)
+		d.writeAheadLog.Reset()
 	}
 
 	return nil
