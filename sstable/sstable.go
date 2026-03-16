@@ -15,8 +15,9 @@ type indexEntry struct {
 }
 
 type SSTable struct {
-	filepath string
+	Filepath string
 	index []indexEntry
+	indexOffset uint32
 }
 
 func OpenSSTable(filepath string) (*SSTable, error) {
@@ -37,7 +38,6 @@ func OpenSSTable(filepath string) (*SSTable, error) {
 	if err != nil {
 		return nil, err
 	}
-
 
 	// read the index into memory starting from the offset
 	// keep track of the bytes to know when to stop reading (before the index offset 4 bytes)
@@ -78,7 +78,7 @@ func OpenSSTable(filepath string) (*SSTable, error) {
 		currentPosition += 4 + keyLen + 4
 	}
 
-	return &SSTable{filepath: filepath, index: index}, nil
+	return &SSTable{Filepath: filepath, index: index, indexOffset: indexOffset}, nil
 }
 
 
@@ -196,7 +196,7 @@ func (s *SSTable) Search(key string) (string, bool, error) {
 	}
 
 	// once you have the byte offset, read those bytes from the file and return the value
-	file, err := os.Open(s.filepath)
+	file, err := os.Open(s.Filepath)
 	if err != nil {
 		return "", false, err
 	}
@@ -224,4 +224,55 @@ func (s *SSTable) Search(key string) (string, bool, error) {
 	value = string(valueBytes)
 
 	return value, found, nil
+}
+ 
+func (s *SSTable) GetPairs() ([]memtable.KeyValuePair, error) {
+	file, err := os.Open(s.Filepath)
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+
+	reader := bufio.NewReader(file)
+	var currentPosition uint32
+
+	var kvPairs []memtable.KeyValuePair
+	for currentPosition < s.indexOffset {
+		var keyLen uint32
+		err = binary.Read(reader, binary.BigEndian, &keyLen)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+
+		var key string
+		keyBytes := make([]byte, keyLen)
+		_, err := io.ReadFull(reader, keyBytes)
+		if err != nil {
+			return nil, err
+		}
+		key = string(keyBytes)
+
+		var valueLen uint32
+		err = binary.Read(reader, binary.BigEndian, &valueLen)
+		if err != nil {
+			return nil, err
+		}
+
+		var value string
+		valueBytes := make([]byte, valueLen)
+		_, err = io.ReadFull(reader, valueBytes)
+		if err != nil {
+			return nil, err
+		}
+		value = string(valueBytes)
+		kvPairs = append(kvPairs, memtable.KeyValuePair{Key: key, Value: value})
+
+		currentPosition += 4 + keyLen + 4 + valueLen
+	}
+
+	return kvPairs, nil
 }

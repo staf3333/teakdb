@@ -8,12 +8,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/staf3333/teakdb/compaction"
 	"github.com/staf3333/teakdb/memtable"
 	"github.com/staf3333/teakdb/sstable"
 	"github.com/staf3333/teakdb/wal"
 )
 
 const defaultMaxSize = 4 * 1024 * 1024 // 4MB
+const defaultSSTableLimit = 5
 
 type DB struct {
 	memtable *memtable.Memtable
@@ -114,6 +116,38 @@ func (d *DB) flushMemtable() error {
 
 		d.memtable = memtable.NewMemtable(defaultMaxSize)
 		d.writeAheadLog.Reset()
+	
+		err = d.compact()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (d *DB) compact() error {
+	if len(d.sstables) > defaultSSTableLimit {
+		fileName := fmt.Sprintf("sstable_%d.sst", time.Now().UnixNano())
+		filePath := filepath.Join(d.dataDir, fileName)
+		err := compaction.Compact(d.sstables, filePath)
+		if err != nil {
+			return err
+		}
+
+		// after compaction, delete the existing sstables
+		for _, table := range d.sstables {
+			os.Remove(table.Filepath)
+		}
+
+		// open the new sstable
+		sst, err := sstable.OpenSSTable(filePath)
+		if err != nil {
+			return err
+		}
+
+		// create new sstables list
+		d.sstables = []sstable.SSTable{*sst}
 	}
 
 	return nil
