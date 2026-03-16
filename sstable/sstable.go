@@ -185,7 +185,15 @@ func (s *SSTable) Search(key string) (string, bool, error) {
 		return "", false, nil
 	}
 
-	// do binary search on the index entries of the SSTable to find the byte offset of the key/val pair
+	return s.searchIndex(key)
+}
+
+// SearchWithoutBloom searches the SSTable without the bloom filter check (for benchmarking)
+func (s *SSTable) SearchWithoutBloom(key string) (string, bool, error) {
+	return s.searchIndex(key)
+}
+
+func (s *SSTable) searchIndex(key string) (string, bool, error) {
 	var found bool
 	var offset uint32
 	left := 0

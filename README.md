@@ -63,7 +63,9 @@ A write-optimized key-value store built from scratch in Go, powered by an LSM tr
 - [x] ~1% false positive rate with double hashing
 
 ### Phase 8: Benchmarks
-- [ ] Random writes, sequential reads, point lookups
+- [x] Random writes, sequential reads, point lookups
+- [x] Bloom filter impact comparison
+- [x] Mixed read/write workload
 
 ## Getting Started
 

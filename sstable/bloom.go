@@ -37,7 +37,7 @@ func (b *BloomFilter) MightContain(key string) bool {
 	return true
 }
 
-// getDoubleHash returns two independent hashes using a seeded FNV approach
+// Copilot helped me generate this for lower false positive rate haha 
 func getDoubleHash(s string) (uint32, uint32) {
 	data := []byte(s)
 
