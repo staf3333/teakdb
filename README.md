@@ -59,7 +59,8 @@ A write-optimized key-value store built from scratch in Go, powered by an LSM tr
 - [x] Deduplicate keys (newest wins)
 
 ### Phase 7: Bloom Filters
-- [ ] Probabilistic check to skip SSTables
+- [x] Probabilistic check to skip SSTables
+- [x] ~1% false positive rate with double hashing
 
 ### Phase 8: Benchmarks
 - [ ] Random writes, sequential reads, point lookups
