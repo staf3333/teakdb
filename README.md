@@ -54,7 +54,9 @@ A write-optimized key-value store built from scratch in Go, powered by an LSM tr
 - [x] Reset WAL on memtable flush
 
 ### Phase 6: Compaction
-- [ ] Merge SSTables (size-tiered)
+- [x] Merge SSTables (size-tiered)
+- [x] K-way merge with min heap
+- [x] Deduplicate keys (newest wins)
 
 ### Phase 7: Bloom Filters
 - [ ] Probabilistic check to skip SSTables
