@@ -114,6 +114,14 @@ The performance gap (~50-80x on writes, ~3-5x on reads) comes from engineering o
 - **Bloom filters are a cheat code**: a few bytes of memory per key can eliminate 99% of unnecessary disk reads. The 2.8x speedup on misses would be even more dramatic with slower storage.
 - **Red-black trees from scratch**: implementing insert-fixup with rotations and recoloring taught me more about balanced BSTs than any textbook. The sentinel node trick eliminates nil checks everywhere.
 
+### What I Struggled With
+
+- **Red-black tree insert fixup**: The hardest part of the entire project. Keeping track of which node is which after rotations swap positions (especially the LR/RL cases where `newNode` and `parent` swap) required multiple iterations to get right. Drawing the trees on paper was essential.
+- **Pointer semantics in Go**: Forgetting when to use `*` vs `&`, why constructors return pointers, and understanding that methods on value receivers get copies (not the original) tripped me up early on.
+- **SSTable file format — reading what I wrote**: Writing length-prefixed binary data was straightforward, but reading it back correctly (seeking to the right positions, reading the footer from the end of the file) required careful thinking about byte offsets.
+- **Bloom filter hash quality**: My first implementation using string concatenation for multiple hashes (`key + "0"`, `key + "1"`) gave an 12% false positive rate instead of the expected 1%. Switched to double hashing with a seeded FNV approach to get proper distribution.
+- **Wiring components together**: Each component was easy to test in isolation, but connecting WAL → Memtable → SSTable → Compaction in `db.go` surfaced edge cases like nil WAL pointers in tests and forgetting to reset the WAL after flushes.
+
 ## Language
 
 Go 🐹
