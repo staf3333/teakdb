@@ -18,6 +18,7 @@ type SSTable struct {
 	Filepath string
 	index []indexEntry
 	indexOffset uint32
+	bloomFilter *BloomFilter
 }
 
 func OpenSSTable(filepath string) (*SSTable, error) {
@@ -78,7 +79,13 @@ func OpenSSTable(filepath string) (*SSTable, error) {
 		currentPosition += 4 + keyLen + 4
 	}
 
-	return &SSTable{Filepath: filepath, index: index, indexOffset: indexOffset}, nil
+
+	bloomFilter := NewBloomFilter(len(index))
+	for _, entry := range index {
+		bloomFilter.Add(entry.key)
+	}
+
+	return &SSTable{Filepath: filepath, index: index, indexOffset: indexOffset, bloomFilter: bloomFilter}, nil
 }
 
 
@@ -173,6 +180,11 @@ func WriteSSTable(sortedPairs []memtable.KeyValuePair, fileName string) error {
 }
 
 func (s *SSTable) Search(key string) (string, bool, error) {
+	// before searching, check bloom filter to avoid searching entire table in the case the key doesn't exist
+	if !s.bloomFilter.MightContain(key) {
+		return "", false, nil
+	}
+
 	// do binary search on the index entries of the SSTable to find the byte offset of the key/val pair
 	var found bool
 	var offset uint32
