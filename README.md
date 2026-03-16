@@ -122,6 +122,18 @@ The performance gap (~50-80x on writes, ~3-5x on reads) comes from engineering o
 - **Bloom filter hash quality**: My first implementation using string concatenation for multiple hashes (`key + "0"`, `key + "1"`) gave an 12% false positive rate instead of the expected 1%. Switched to double hashing with a seeded FNV approach to get proper distribution.
 - **Wiring components together**: Each component was easy to test in isolation, but connecting WAL → Memtable → SSTable → Compaction in `db.go` surfaced edge cases like nil WAL pointers in tests and forgetting to reset the WAL after flushes.
 
+## Future Work: Distributed-Ready
+
+Features needed before TeakDB can serve as the storage engine for a distributed key-value store:
+
+- [ ] **Concurrency safety** — add mutex locks or a lock-free memtable for concurrent readers/writers
+- [ ] **Delete support** — implement tombstone markers that propagate through compaction
+- [ ] **Range scans** — `Scan(startKey, endKey)` for partition splits and data transfer between nodes
+- [ ] **DB Close()** — graceful shutdown that flushes memtable and closes WAL
+- [ ] **Configurable options** — memtable size, compaction threshold, data directory as constructor params
+- [ ] **Byte-level keys/values** — switch from `string` to `[]byte` for binary-safe storage
+- [ ] **SSTable metadata** — track min/max keys per SSTable for faster range filtering
+
 ## Language
 
 Go 🐹
